@@ -10,7 +10,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/wwt/guac"
 )
 
@@ -21,7 +22,15 @@ var (
 )
 
 func main() {
-	logrus.SetLevel(logrus.DebugLevel)
+	// Configure the main application logger
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	// Configure the guac package logger separately (optional)
+	// This demonstrates that the guac package has its own isolated logger
+	// Uncomment to enable guac internal logging:
+	guac.SetLogLevelConsole(zerolog.DebugLevel) // Use console output for development
+	// guac.SetLogLevel(zerolog.InfoLevel)        // Use JSON output for production
 
 	if os.Getenv("CERT_PATH") != "" {
 		certPath = os.Getenv("CERT_PATH")
@@ -32,11 +41,11 @@ func main() {
 	}
 
 	if certPath != "" && certKeyPath == "" {
-		logrus.Fatal("You must set the CERT_KEY_PATH environment variable to specify the full path to the certificate keyfile")
+		log.Fatal().Msg("You must set the CERT_KEY_PATH environment variable to specify the full path to the certificate keyfile")
 	}
 
 	if certPath == "" && certKeyPath != "" {
-		logrus.Fatal("You must set the CERT_PATH environment variable to specify the full path to the certificate file")
+		log.Fatal().Msg("You must set the CERT_PATH environment variable to specify the full path to the certificate file")
 	}
 
 	if os.Getenv("GUACD_ADDRESS") != "" {
@@ -76,7 +85,7 @@ func main() {
 		}
 
 		if err := json.NewEncoder(w).Encode(connIds); err != nil {
-			logrus.Error(err)
+			log.Error().Err(err).Msg("Error encoding sessions")
 		}
 	})
 
@@ -84,7 +93,7 @@ func main() {
 	if certPath != "" {
 		cert, err := tls.LoadX509KeyPair(certPath, certKeyPath)
 		if err != nil {
-			logrus.Fatalf("Unable to load certificate keypair: %s\n", err)
+			log.Fatal().Err(err).Msg("Unable to load certificate keypair")
 		}
 
 		tlsCfg.MinVersion = tls.VersionTLS13
@@ -106,18 +115,18 @@ func main() {
 	}
 
 	if certPath != "" {
-		logrus.Println("Serving on https://0.0.0.0:4567")
+		log.Info().Msg("Serving on https://0.0.0.0:4567")
 
 		err := s.ListenAndServeTLS("", "")
 		if err != nil {
-			logrus.Fatal(err)
+			log.Fatal().Err(err).Msg("Failed to start HTTPS server")
 		}
 	} else {
-		logrus.Println("Serving on http://0.0.0.0:4567")
+		log.Info().Msg("Serving on http://0.0.0.0:4567")
 
 		err := s.ListenAndServe()
 		if err != nil {
-			logrus.Fatal(err)
+			log.Fatal().Err(err).Msg("Failed to start HTTP server")
 		}
 	}
 }
@@ -131,17 +140,17 @@ func DemoDoConnect(request *http.Request) (guac.Tunnel, error) {
 		// http tunnel uses the body to pass parameters
 		data, err := io.ReadAll(request.Body)
 		if err != nil {
-			logrus.Error("Failed to read body ", err)
+			log.Error().Err(err).Msg("Failed to read body")
 			return nil, err
 		}
 		_ = request.Body.Close()
 		queryString := string(data)
 		query, err = url.ParseQuery(queryString)
 		if err != nil {
-			logrus.Error("Failed to parse body query ", err)
+			log.Error().Err(err).Msg("Failed to parse body query")
 			return nil, err
 		}
-		logrus.Debugln("body:", queryString, query)
+		log.Debug().Str("body", queryString).Interface("query", query).Msg("Parsed request body")
 	} else {
 		query = request.URL.Query()
 	}
@@ -156,46 +165,46 @@ func DemoDoConnect(request *http.Request) (guac.Tunnel, error) {
 	if query.Get("width") != "" {
 		config.OptimalScreenHeight, err = strconv.Atoi(query.Get("width"))
 		if err != nil || config.OptimalScreenHeight == 0 {
-			logrus.Error("Invalid height")
+			log.Error().Msg("Invalid height")
 			config.OptimalScreenHeight = 600
 		}
 	}
 	if query.Get("height") != "" {
 		config.OptimalScreenWidth, err = strconv.Atoi(query.Get("height"))
 		if err != nil || config.OptimalScreenWidth == 0 {
-			logrus.Error("Invalid width")
+			log.Error().Msg("Invalid width")
 			config.OptimalScreenWidth = 800
 		}
 	}
 	config.AudioMimetypes = []string{"audio/L16", "rate=44100", "channels=2"}
 
-	logrus.Debug("Connecting to guacd")
+	log.Debug().Msg("Connecting to guacd")
 	addr, err := net.ResolveTCPAddr("tcp", guacdAddr)
 	if err != nil {
-		logrus.Errorln("error resolving guacd address", err)
+		log.Error().Err(err).Msg("Error resolving guacd address")
 		return nil, err
 	}
 
 	conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
-		logrus.Errorln("error while connecting to guacd", err)
+		log.Error().Err(err).Msg("Error while connecting to guacd")
 		return nil, err
 	}
 
 	stream := guac.NewStream(conn, guac.SocketTimeout)
 
-	logrus.Debug("Connected to guacd")
+	log.Debug().Msg("Connected to guacd")
 	if request.URL.Query().Get("uuid") != "" {
 		config.ConnectionID = request.URL.Query().Get("uuid")
 	}
 
 	sanitisedCfg := config
 	sanitisedCfg.Parameters["password"] = "********"
-	logrus.Debugf("Starting handshake with %#v", sanitisedCfg)
+	log.Debug().Interface("config", sanitisedCfg).Msg("Starting handshake")
 	err = stream.Handshake(config)
 	if err != nil {
 		return nil, err
 	}
-	logrus.Debug("Socket configured")
+	log.Debug().Msg("Socket configured")
 	return guac.NewSimpleTunnel(stream), nil
 }

@@ -2,8 +2,9 @@ package guac
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"io"
+
+	"github.com/google/uuid"
 )
 
 // The Guacamole protocol instruction Opcode reserved for arbitrary
@@ -109,7 +110,14 @@ func (t *SimpleTunnel) HasQueuedWriterThreads() bool {
 
 // Close closes the underlying stream
 func (t *SimpleTunnel) Close() (err error) {
-	return t.stream.Close()
+	guacLogger.Info().Str("connection_id", t.ConnectionID()).Msg("Tunnel closing")
+	err = t.stream.Close()
+	if err != nil {
+		guacLogger.Error().Err(err).Str("connection_id", t.ConnectionID()).Msg("Error closing tunnel stream")
+	} else {
+		guacLogger.Debug().Str("connection_id", t.ConnectionID()).Msg("Tunnel closed successfully")
+	}
+	return err
 }
 
 // GetUUID returns the tunnel's UUID

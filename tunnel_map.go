@@ -1,7 +1,6 @@
 package guac
 
 import (
-	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -62,7 +61,7 @@ type TunnelMap struct {
 	tunnelTimeout time.Duration
 
 	// Map of all tunnels that are using HTTP, indexed by tunnel UUID.
-	tunnelMap     map[string]*LastAccessedTunnel
+	tunnelMap map[string]*LastAccessedTunnel
 }
 
 // NewTunnelMap creates a new TunnelMap and starts the scheduled job with the default timeout.
@@ -105,13 +104,13 @@ func (m *TunnelMap) tunnelTimeoutTaskRun() {
 
 	m.Lock()
 	for _, double := range removeIDs {
-		logrus.Debugf("HTTP tunnel \"%v\" has timed out.", double.uuid)
+		guacLogger.Debug().Str("uuid", double.uuid).Msg("HTTP tunnel has timed out")
 		delete(m.tunnelMap, double.uuid)
 
 		if double.tunnel != nil {
 			err := double.tunnel.Close()
 			if err != nil {
-				logrus.Debug("Unable to close expired HTTP tunnel.", err)
+				guacLogger.Debug().Err(err).Msg("Unable to close expired HTTP tunnel")
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-module github.com/wwt/guac
+module github.com/codecademy-engineering/guac
 
 go 1.24.0
 

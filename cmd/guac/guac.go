@@ -10,9 +10,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/codecademy-engineering/guac"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/wwt/guac"
 )
 
 var (

@@ -11,8 +11,8 @@ import (
 // interfere with global logging settings
 func TestLoggerIsolation(t *testing.T) {
 	// Save original logger
-	originalLogger := guacLogger
-	defer func() { guacLogger = originalLogger }()
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
 
 	// Create a buffer to capture logs
 	var buf bytes.Buffer
@@ -23,7 +23,7 @@ func TestLoggerIsolation(t *testing.T) {
 	SetLogger(testLogger)
 
 	// Log something at debug level from guac
-	guacLogger.Debug().Msg("test message")
+	globalLogger.Debug().Msg("test message")
 
 	// Verify that the message was logged
 	if buf.Len() == 0 {
@@ -51,14 +51,14 @@ func TestDefaultLoggerDisabled(t *testing.T) {
 func TestSetLogLevel(t *testing.T) {
 	// Capture output
 	var buf bytes.Buffer
-	originalLogger := guacLogger
-	defer func() { guacLogger = originalLogger }()
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
 
 	// Create a logger that writes to our buffer
-	guacLogger = zerolog.New(&buf).Level(zerolog.InfoLevel)
+	globalLogger = zerolog.New(&buf).Level(zerolog.InfoLevel)
 
 	// Log at info level
-	guacLogger.Info().Msg("info message")
+	globalLogger.Info().Msg("info message")
 
 	// Verify message was logged
 	if !bytes.Contains(buf.Bytes(), []byte("info message")) {
@@ -69,7 +69,7 @@ func TestSetLogLevel(t *testing.T) {
 	buf.Reset()
 
 	// Log at debug level (should not appear since level is Info)
-	guacLogger.Debug().Msg("debug message")
+	globalLogger.Debug().Msg("debug message")
 
 	// Verify debug message was not logged
 	if bytes.Contains(buf.Bytes(), []byte("debug message")) {
@@ -80,20 +80,20 @@ func TestSetLogLevel(t *testing.T) {
 // TestSetLogLevelConsole verifies that SetLogLevelConsole creates a logger
 func TestSetLogLevelConsole(t *testing.T) {
 	// Save and restore original logger
-	originalLogger := guacLogger
-	defer func() { guacLogger = originalLogger }()
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
 
 	// Set console log level
 	SetLogLevelConsole(zerolog.InfoLevel)
 
 	// Verify logger is not disabled
-	if guacLogger.GetLevel() == zerolog.Disabled {
+	if globalLogger.GetLevel() == zerolog.Disabled {
 		t.Error("Expected logger to not be disabled after SetLogLevelConsole")
 	}
 
 	// Verify level is set correctly
-	if guacLogger.GetLevel() != zerolog.InfoLevel {
-		t.Errorf("Expected logger level to be Info, got: %v", guacLogger.GetLevel())
+	if globalLogger.GetLevel() != zerolog.InfoLevel {
+		t.Errorf("Expected logger level to be Info, got: %v", globalLogger.GetLevel())
 	}
 }
 
@@ -101,15 +101,15 @@ func TestSetLogLevelConsole(t *testing.T) {
 // the log level settings
 func TestConnectionLoggingRespectLevel(t *testing.T) {
 	// Save and restore original logger
-	originalLogger := guacLogger
-	defer func() { guacLogger = originalLogger }()
+	originalLogger := globalLogger
+	defer func() { globalLogger = originalLogger }()
 
 	// Create a buffer to capture logs
 	var buf bytes.Buffer
-	guacLogger = zerolog.New(&buf).Level(zerolog.ErrorLevel)
+	globalLogger = zerolog.New(&buf).Level(zerolog.ErrorLevel)
 
 	// Try to log at info level (should not appear)
-	guacLogger.Info().Msg("info message")
+	globalLogger.Info().Msg("info message")
 
 	// Verify nothing was logged
 	if buf.Len() > 0 {
@@ -117,7 +117,7 @@ func TestConnectionLoggingRespectLevel(t *testing.T) {
 	}
 
 	// Try to log at error level (should appear)
-	guacLogger.Error().Msg("error message")
+	globalLogger.Error().Msg("error message")
 
 	// Verify something was logged
 	if buf.Len() == 0 {

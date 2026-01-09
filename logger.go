@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	// guacLogger is the package-level logger, isolated from the consuming application
+	// globalLogger is the package-level logger, isolated from the consuming application
 	// By default, it's disabled to prevent logs from appearing unless explicitly configured
-	guacLogger = createDefaultLogger()
+	globalLogger = createDefaultLogger()
 )
 
 // createDefaultLogger creates a logger that is disabled by default
@@ -28,7 +28,7 @@ func createDefaultLogger() zerolog.Logger {
 //	logger := zerolog.New(os.Stderr).With().Timestamp().Logger().Level(zerolog.InfoLevel)
 //	guac.SetLogger(logger)
 func SetLogger(l zerolog.Logger) {
-	guacLogger = l
+	globalLogger = l
 }
 
 // SetLogLevel sets the log level for the guac package logger with JSON output
@@ -39,7 +39,7 @@ func SetLogger(l zerolog.Logger) {
 //	guac.SetLogLevel(zerolog.InfoLevel)
 func SetLogLevel(level zerolog.Level) {
 	// Create a new logger with JSON output and the specified level
-	guacLogger = zerolog.New(os.Stderr).
+	globalLogger = zerolog.New(os.Stderr).
 		With().
 		Timestamp().
 		Logger().
@@ -54,7 +54,7 @@ func SetLogLevel(level zerolog.Level) {
 //	guac.SetLogLevelConsole(zerolog.InfoLevel)
 func SetLogLevelConsole(level zerolog.Level) {
 	// Create a new logger with console output and the specified level
-	guacLogger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
+	globalLogger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).
 		With().
 		Timestamp().
 		Logger().
@@ -63,5 +63,5 @@ func SetLogLevelConsole(level zerolog.Level) {
 
 // GetLogger returns the current package logger
 func GetLogger() zerolog.Logger {
-	return guacLogger
+	return globalLogger
 }

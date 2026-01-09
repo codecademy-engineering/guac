@@ -104,13 +104,13 @@ func (m *TunnelMap) tunnelTimeoutTaskRun() {
 
 	m.Lock()
 	for _, double := range removeIDs {
-		guacLogger.Debug().Str("uuid", double.uuid).Msg("HTTP tunnel has timed out")
+		globalLogger.Debug().Str("uuid", double.uuid).Msg("HTTP tunnel has timed out")
 		delete(m.tunnelMap, double.uuid)
 
 		if double.tunnel != nil {
 			err := double.tunnel.Close()
 			if err != nil {
-				guacLogger.Debug().Err(err).Msg("Unable to close expired HTTP tunnel")
+				globalLogger.Debug().Err(err).Msg("Unable to close expired HTTP tunnel")
 			}
 		}
 	}

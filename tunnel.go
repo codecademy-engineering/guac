@@ -110,12 +110,12 @@ func (t *SimpleTunnel) HasQueuedWriterThreads() bool {
 
 // Close closes the underlying stream
 func (t *SimpleTunnel) Close() (err error) {
-	guacLogger.Trace().Str("connection_id", t.ConnectionID()).Msg("tunnel closing")
+	globalLogger.Trace().Str("connection_id", t.ConnectionID()).Msg("tunnel closing")
 	err = t.stream.Close()
 	if err != nil {
-		guacLogger.Error().Err(err).Str("connection_id", t.ConnectionID()).Msg("error closing tunnel stream")
+		globalLogger.Error().Err(err).Str("connection_id", t.ConnectionID()).Msg("error closing tunnel stream")
 	} else {
-		guacLogger.Trace().Str("connection_id", t.ConnectionID()).Msg("tunnel closed successfully")
+		globalLogger.Trace().Str("connection_id", t.ConnectionID()).Msg("tunnel closed successfully")
 	}
 	return err
 }

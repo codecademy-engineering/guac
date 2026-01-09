@@ -32,13 +32,13 @@ func NewServer(connect func(r *http.Request) (Tunnel, error)) *Server {
 // Registers the given tunnel such that future read/write requests to that tunnel will be properly directed.
 func (s *Server) registerTunnel(tunnel Tunnel) {
 	s.tunnels.Put(tunnel.GetUUID(), tunnel)
-	guacLogger.Debug().Str("uuid", tunnel.GetUUID()).Msg("registered tunnel")
+	globalLogger.Debug().Str("uuid", tunnel.GetUUID()).Msg("registered tunnel")
 }
 
 // Deregisters the given tunnel such that future read/write requests to that tunnel will be rejected.
 func (s *Server) deregisterTunnel(tunnel Tunnel) {
 	s.tunnels.Remove(tunnel.GetUUID())
-	guacLogger.Debug().Str("uuid", tunnel.GetUUID()).Msg("deregistered tunnel")
+	globalLogger.Debug().Str("uuid", tunnel.GetUUID()).Msg("deregistered tunnel")
 }
 
 // Returns the tunnel with the given UUID.
@@ -66,11 +66,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	guacErr := err.(*ErrGuac)
 	switch guacErr.Kind {
 	case ErrClient:
-		guacLogger.Warn().Err(err).Msg("HTTP tunnel request rejected")
+		globalLogger.Warn().Err(err).Msg("HTTP tunnel request rejected")
 		s.sendError(w, guacErr.Status, err.Error())
 	default:
-		guacLogger.Error().Err(err).Msg("HTTP tunnel request failed")
-		guacLogger.Debug().Err(err).Msg("Internal error in HTTP tunnel")
+		globalLogger.Error().Err(err).Msg("HTTP tunnel request failed")
+		globalLogger.Debug().Err(err).Msg("Internal error in HTTP tunnel")
 		s.sendError(w, guacErr.Status, "Internal server error.")
 	}
 	return
@@ -155,7 +155,7 @@ func (s *Server) doRead(response http.ResponseWriter, request *http.Request, tun
 			v.Flush()
 		}
 	default:
-		guacLogger.Debug().Err(err).Msg("Error writing to output")
+		globalLogger.Debug().Err(err).Msg("Error writing to output")
 		s.deregisterTunnel(tunnel)
 		tunnel.Close()
 	}
@@ -230,7 +230,7 @@ func (s *Server) doWrite(response http.ResponseWriter, request *http.Request, tu
 	if err != nil {
 		s.deregisterTunnel(tunnel)
 		if err = tunnel.Close(); err != nil {
-			guacLogger.Debug().Err(err).Msg("Error closing tunnel")
+			globalLogger.Debug().Err(err).Msg("Error closing tunnel")
 		}
 	}
 

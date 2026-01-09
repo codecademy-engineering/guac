@@ -53,7 +53,7 @@ func main() {
 	}
 
 	servlet := guac.NewServer(DemoDoConnect)
-	wsServer := guac.NewWebsocketServer(DemoDoConnect)
+	wsServer := guac.NewWebsocketServer(DemoDoConnect, nil)
 
 	sessions := guac.NewMemorySessionStore()
 	wsServer.OnConnect = sessions.Add

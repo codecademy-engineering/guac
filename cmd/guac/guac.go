@@ -41,11 +41,11 @@ func main() {
 	}
 
 	if certPath != "" && certKeyPath == "" {
-		log.Fatal().Msg("You must set the CERT_KEY_PATH environment variable to specify the full path to the certificate keyfile")
+		log.Fatal().Msg("you must set the CERT_KEY_PATH environment variable to specify the full path to the certificate keyfile")
 	}
 
 	if certPath == "" && certKeyPath != "" {
-		log.Fatal().Msg("You must set the CERT_PATH environment variable to specify the full path to the certificate file")
+		log.Fatal().Msg("you must set the CERT_PATH environment variable to specify the full path to the certificate file")
 	}
 
 	if os.Getenv("GUACD_ADDRESS") != "" {
@@ -85,7 +85,7 @@ func main() {
 		}
 
 		if err := json.NewEncoder(w).Encode(connIds); err != nil {
-			log.Error().Err(err).Msg("Error encoding sessions")
+			log.Error().Err(err).Msg("error encoding sessions")
 		}
 	})
 
@@ -93,7 +93,7 @@ func main() {
 	if certPath != "" {
 		cert, err := tls.LoadX509KeyPair(certPath, certKeyPath)
 		if err != nil {
-			log.Fatal().Err(err).Msg("Unable to load certificate keypair")
+			log.Fatal().Err(err).Msg("unable to load certificate keypair")
 		}
 
 		tlsCfg.MinVersion = tls.VersionTLS13
@@ -115,18 +115,18 @@ func main() {
 	}
 
 	if certPath != "" {
-		log.Info().Msg("Serving on https://0.0.0.0:4567")
+		log.Info().Msg("serving on https://0.0.0.0:4567")
 
 		err := s.ListenAndServeTLS("", "")
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to start HTTPS server")
+			log.Fatal().Err(err).Msg("failed to start HTTPS server")
 		}
 	} else {
-		log.Info().Msg("Serving on http://0.0.0.0:4567")
+		log.Info().Msg("serving on http://0.0.0.0:4567")
 
 		err := s.ListenAndServe()
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to start HTTP server")
+			log.Fatal().Err(err).Msg("failed to start HTTP server")
 		}
 	}
 }
@@ -140,17 +140,17 @@ func DemoDoConnect(request *http.Request) (guac.Tunnel, error) {
 		// http tunnel uses the body to pass parameters
 		data, err := io.ReadAll(request.Body)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to read body")
+			log.Error().Err(err).Msg("failed to read body")
 			return nil, err
 		}
 		_ = request.Body.Close()
 		queryString := string(data)
 		query, err = url.ParseQuery(queryString)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to parse body query")
+			log.Error().Err(err).Msg("failed to parse body query")
 			return nil, err
 		}
-		log.Debug().Str("body", queryString).Interface("query", query).Msg("Parsed request body")
+		log.Debug().Str("body", queryString).Interface("query", query).Msg("parsed request body")
 	} else {
 		query = request.URL.Query()
 	}
@@ -165,46 +165,46 @@ func DemoDoConnect(request *http.Request) (guac.Tunnel, error) {
 	if query.Get("width") != "" {
 		config.OptimalScreenHeight, err = strconv.Atoi(query.Get("width"))
 		if err != nil || config.OptimalScreenHeight == 0 {
-			log.Error().Msg("Invalid height")
+			log.Error().Msg("invalid height")
 			config.OptimalScreenHeight = 600
 		}
 	}
 	if query.Get("height") != "" {
 		config.OptimalScreenWidth, err = strconv.Atoi(query.Get("height"))
 		if err != nil || config.OptimalScreenWidth == 0 {
-			log.Error().Msg("Invalid width")
+			log.Error().Msg("invalid width")
 			config.OptimalScreenWidth = 800
 		}
 	}
 	config.AudioMimetypes = []string{"audio/L16", "rate=44100", "channels=2"}
 
-	log.Debug().Msg("Connecting to guacd")
+	log.Debug().Msg("connecting to guacd")
 	addr, err := net.ResolveTCPAddr("tcp", guacdAddr)
 	if err != nil {
-		log.Error().Err(err).Msg("Error resolving guacd address")
+		log.Error().Err(err).Msg("error resolving guacd address")
 		return nil, err
 	}
 
 	conn, err := net.DialTCP("tcp", nil, addr)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while connecting to guacd")
+		log.Error().Err(err).Msg("error while connecting to guacd")
 		return nil, err
 	}
 
 	stream := guac.NewStream(conn, guac.SocketTimeout)
 
-	log.Debug().Msg("Connected to guacd")
+	log.Debug().Msg("connected to guacd")
 	if request.URL.Query().Get("uuid") != "" {
 		config.ConnectionID = request.URL.Query().Get("uuid")
 	}
 
 	sanitisedCfg := config
 	sanitisedCfg.Parameters["password"] = "********"
-	log.Debug().Interface("config", sanitisedCfg).Msg("Starting handshake")
+	log.Debug().Interface("config", sanitisedCfg).Msg("starting handshake")
 	err = stream.Handshake(config)
 	if err != nil {
 		return nil, err
 	}
-	log.Debug().Msg("Socket configured")
+	log.Debug().Msg("socket configured")
 	return guac.NewSimpleTunnel(stream), nil
 }

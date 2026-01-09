@@ -32,13 +32,13 @@ func NewServer(connect func(r *http.Request) (Tunnel, error)) *Server {
 // Registers the given tunnel such that future read/write requests to that tunnel will be properly directed.
 func (s *Server) registerTunnel(tunnel Tunnel) {
 	s.tunnels.Put(tunnel.GetUUID(), tunnel)
-	guacLogger.Debug().Str("uuid", tunnel.GetUUID()).Msg("Registered tunnel")
+	guacLogger.Debug().Str("uuid", tunnel.GetUUID()).Msg("registered tunnel")
 }
 
 // Deregisters the given tunnel such that future read/write requests to that tunnel will be rejected.
 func (s *Server) deregisterTunnel(tunnel Tunnel) {
 	s.tunnels.Remove(tunnel.GetUUID())
-	guacLogger.Debug().Str("uuid", tunnel.GetUUID()).Msg("Deregistered tunnel")
+	guacLogger.Debug().Str("uuid", tunnel.GetUUID()).Msg("deregistered tunnel")
 }
 
 // Returns the tunnel with the given UUID.

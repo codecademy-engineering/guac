@@ -58,7 +58,7 @@ func (s *WebsocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"Sec-Websocket-Protocol": {protocol},
 	})
 	if err != nil {
-		guacLogger.Error().Err(err).Msg("Failed to upgrade websocket")
+		guacLogger.Error().Err(err).Msg("failed to upgrade websocket")
 		return
 	}
 	defer func() {
@@ -67,7 +67,7 @@ func (s *WebsocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	guacLogger.Debug().Msg("Connecting to tunnel")
+	guacLogger.Trace().Msg("connecting to tunnel")
 	var tunnel Tunnel
 	var e error
 	if s.connect != nil {
@@ -83,10 +83,10 @@ func (s *WebsocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			guacLogger.Trace().Err(err).Msg("Error closing tunnel")
 		}
 	}()
-	guacLogger.Debug().Msg("Connected to tunnel")
+	guacLogger.Trace().Msg("connected to tunnel")
 
 	id := tunnel.ConnectionID()
-	guacLogger.Info().Str("connection_id", id).Str("remote_addr", r.RemoteAddr).Msg("WebSocket connection established")
+	guacLogger.Trace().Str("connection_id", id).Str("remote_addr", r.RemoteAddr).Msg("websocket connection established")
 
 	if s.OnConnect != nil {
 		s.OnConnect(id, r)
@@ -104,7 +104,7 @@ func (s *WebsocketServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if s.OnDisconnectWs != nil {
 		defer s.OnDisconnectWs(id, ws, r, tunnel)
 	}
-	defer guacLogger.Info().Str("connection_id", id).Msg("WebSocket connection closed")
+	defer guacLogger.Trace().Str("connection_id", id).Msg("websocket connection closed")
 
 	defer tunnel.ReleaseWriter()
 	defer tunnel.ReleaseReader()
@@ -153,7 +153,6 @@ func guacdToWs(ws MessageWriter, guacd InstructionReader) {
 	for {
 		ins, err := guacd.ReadSome()
 		if err != nil {
-			guacLogger.Trace().Err(err).Msg("Error reading from guacd")
 			guacLogger.Warn().Err(err).Msg("[guacd -> Browser] guacd disconnected or error reading from guacd")
 			return
 		}
@@ -164,7 +163,6 @@ func guacdToWs(ws MessageWriter, guacd InstructionReader) {
 		}
 
 		if _, err = buf.Write(ins); err != nil {
-			guacLogger.Trace().Err(err).Msg("Failed to buffer guacd to ws")
 			guacLogger.Error().Err(err).Msg("[guacd -> Browser] Failed to buffer message from guacd")
 			return
 		}
@@ -173,10 +171,9 @@ func guacdToWs(ws MessageWriter, guacd InstructionReader) {
 		if !guacd.Available() || buf.Len() >= MaxGuacMessage {
 			if err = ws.WriteMessage(1, buf.Bytes()); err != nil {
 				if err == websocket.ErrCloseSent {
-					guacLogger.Info().Msg("[guacd -> Browser] WebSocket already closed (clean close)")
+					guacLogger.Debug().Msg("[guacd -> Browser] websocket already closed (clean close)")
 					return
 				}
-				guacLogger.Trace().Err(err).Msg("Failed sending message to ws")
 				guacLogger.Warn().Err(err).Msg("[guacd -> Browser] Failed to write to WebSocket (browser may have disconnected)")
 				return
 			}

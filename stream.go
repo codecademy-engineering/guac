@@ -41,7 +41,7 @@ func NewStream(conn net.Conn, timeout time.Duration) (ret *Stream) {
 // Write sends messages to Guacamole with a timeout
 func (s *Stream) Write(data []byte) (n int, err error) {
 	if err = s.conn.SetWriteDeadline(time.Now().Add(s.timeout)); err != nil {
-		guacLogger.Error().Err(err).Msg("Error setting write deadline")
+		guacLogger.Error().Err(err).Msg("error setting write deadline")
 		return
 	}
 	return s.conn.Write(data)
@@ -62,7 +62,7 @@ func (s *Stream) Flush() {
 // io.Reader is not implemented because this seems like the right place to maintain a buffer.
 func (s *Stream) ReadSome() (instruction []byte, err error) {
 	if err = s.conn.SetReadDeadline(time.Now().Add(s.timeout)); err != nil {
-		guacLogger.Error().Err(err).Msg("Error setting read deadline")
+		guacLogger.Error().Err(err).Msg("error setting read deadline")
 		return
 	}
 
@@ -133,14 +133,14 @@ func (s *Stream) ReadSome() (instruction []byte, err error) {
 			case net.Error:
 				ex := err.(net.Error)
 				if ex.Timeout() {
-					guacLogger.Warn().Str("connection_id", s.ConnectionID).Dur("timeout", s.timeout).Msg("Connection to guacd timed out")
+					guacLogger.Warn().Str("connection_id", s.ConnectionID).Dur("timeout", s.timeout).Msg("connection to guacd timed out")
 					err = ErrUpstreamTimeout.NewError("Connection to guacd timed out.", err.Error())
 				} else {
-					guacLogger.Warn().Err(err).Str("connection_id", s.ConnectionID).Msg("Connection to guacd closed unexpectedly")
+					guacLogger.Warn().Err(err).Str("connection_id", s.ConnectionID).Msg("connection to guacd closed unexpectedly")
 					err = ErrConnectionClosed.NewError("Connection to guacd is closed.", err.Error())
 				}
 			default:
-				guacLogger.Error().Err(err).Str("connection_id", s.ConnectionID).Msg("Error reading from guacd")
+				guacLogger.Error().Err(err).Str("connection_id", s.ConnectionID).Msg("error reading from guacd")
 				err = ErrServer.NewError(err.Error())
 			}
 			return
@@ -162,12 +162,12 @@ func (s *Stream) ReadSome() (instruction []byte, err error) {
 
 // Close closes the underlying network connection
 func (s *Stream) Close() error {
-	guacLogger.Debug().Str("connection_id", s.ConnectionID).Msg("Closing guacd stream")
+	guacLogger.Trace().Str("connection_id", s.ConnectionID).Msg("closing guacd stream")
 	err := s.conn.Close()
 	if err != nil {
-		guacLogger.Error().Err(err).Str("connection_id", s.ConnectionID).Msg("Error closing guacd connection")
+		guacLogger.Error().Err(err).Str("connection_id", s.ConnectionID).Msg("error closing guacd connection")
 	} else {
-		guacLogger.Debug().Str("connection_id", s.ConnectionID).Msg("guacd stream closed successfully")
+		guacLogger.Trace().Str("connection_id", s.ConnectionID).Msg("guacd stream closed successfully")
 	}
 	return err
 }
